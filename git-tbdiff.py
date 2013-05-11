@@ -92,8 +92,8 @@ def puterr(data):
     sys.stderr.flush()
 
 
-def oneliner(sha1):
-    return subprocess.check_output(['git', 'log', '--no-walk', '--oneline', sha1]).strip()
+def commitinfo(sha1, fmt=None):
+    return subprocess.check_output(['git', 'log', '--no-walk', '--pretty=format:%h %s', sha1]).strip().split(' ', 1)
 
 
 
@@ -137,6 +137,9 @@ if __name__ == '__main__':
         for j,v in enumerate(sB):
             dist[i,j] = diffsize(None, dB[v])
     lhs, rhs = hungarian.lap(dist)
+    numwidth = max(len(str(la)), len(str(lb)))
+    numfmt = "%%%dd" % numwidth
+    numdash = numwidth*'-'
     # We assume the user is really more interested in the second
     # argument ("newer" version).  To that end, we print the output in
     # the order of the RHS.  To put the LHS commits that are no longer
@@ -145,8 +148,6 @@ if __name__ == '__main__':
     new_on_lhs = (lhs > lb)[:la]
     lhs_prior_counter = np.arange(la)
     for j,(u,i) in enumerate(zip(sB, rhs)):
-        if j > 0:
-            print
         # repeatedly show LHS-specific commits that had all their
         # predecessors shown
         while True:
@@ -155,18 +156,17 @@ if __name__ == '__main__':
             idx = w.nonzero()[0]
             if not idx:
                 break
-            print "%s<%3d: %s%s" % (c_old, idx[0], sA[idx[0]], c_reset)
-            print "    only in lhs"
-            print
+            left_sha, left_subj = commitinfo(sA[idx[0]])
+            print ("%s"+numfmt+": %8s < "+numdash+"           %s%s") % (c_old, idx[0], left_sha, left_subj, c_reset)
             new_on_lhs[idx[0]] = False
             lhs_prior_counter[idx[0]+1:] -= 1
         # now show an RHS commit
         if i < la:
-            print "%s>%3d: %s%s" % (c_commit, j+1, oneliner(u), c_reset)
-            print "%s<%3d: %s%s" % (c_commit, i+1, oneliner(sA[i]), c_reset)
             idiff = list(difflib.unified_diff(dA[sA[i]], dB[u]))
+            left_sha, left_subj = commitinfo(sA[i])
+            right_sha, right_subj = commitinfo(u)
             if idiff:
-                print "    interdiff:"
+                print ("%s"+numfmt+": %8s ! "+numfmt+": %8s %s%s") % (c_commit, i+1, left_sha, j+1, right_sha, right_subj, c_reset)
                 for line in idiff[2:]: # starts with --- and +++ lines
                     c = ''
                     if line.startswith('+'):
@@ -176,7 +176,9 @@ if __name__ == '__main__':
                     elif line.startswith('@@'):
                         c = c_frag
                     print "        %s%s%s" % (c, line.rstrip('\n'), c_reset)
+            else:
+                print ("%s"+numfmt+": %8s = "+numfmt+": %8s %s%s") % (c_commit, i+1, left_sha, j+1, right_sha, right_subj, c_reset)
             lhs_prior_counter[i+1:] -= 1
         else:
-            print "%s>%3d: %s%s" % (c_new, j+1, oneliner(u), c_reset)
-            print "    only in rhs"
+            right_sha, right_subj = commitinfo(u)
+            print ("%s"+numdash+"           > "+numfmt+": %8s %s%s") % (c_new, j+1, right_sha, right_subj, c_reset)
