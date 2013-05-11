@@ -163,7 +163,7 @@ if __name__ == '__main__':
             if not idx:
                 break
             left_sha, left_subj = commitinfo(sA[idx[0]])
-            print ("%s"+numfmt+": %8s < "+numdash+"           %s%s") % (c_old, idx[0], left_sha, left_subj, c_reset)
+            print ("%s"+numfmt+": %8s < "+numdash+":  ------- %s%s") % (c_old, idx[0]+1, left_sha, left_subj, c_reset)
             new_on_lhs[idx[0]] = False
             lhs_prior_counter[idx[0]+1:] -= 1
         # now show an RHS commit
@@ -187,4 +187,4 @@ if __name__ == '__main__':
             lhs_prior_counter[i+1:] -= 1
         else:
             right_sha, right_subj = commitinfo(u)
-            print ("%s"+numdash+"           > "+numfmt+": %8s %s%s") % (c_new, j+1, right_sha, right_subj, c_reset)
+            print ("%s"+numdash+":  ------- > "+numfmt+": %8s %s%s") % (c_new, j+1, right_sha, right_subj, c_reset)
