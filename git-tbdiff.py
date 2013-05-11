@@ -122,26 +122,49 @@ def commitinfo_maybe(cmt):
         subj = ''
     return sha, subj
 
-def format_commit_line(i, left, j, right, statuschar, color):
+def format_commit_line(i, left, j, right, has_diff=False):
     left_sha, left_subj = commitinfo_maybe(left)
     right_sha, right_subj = commitinfo_maybe(right)
+    assert left or right
+    if left and not right:
+        color = c_old
+        status = '<'
+    elif right and not left:
+        color = c_new
+        status = '>'
+    elif has_diff:
+        color = c_commit
+        status = '!'
+    else:
+        color = c_commit
+        status = '='
     fmt = '%s' # color
     args = [color]
+    # left coloring
+    if status == '!':
+        fmt += c_reset + c_old
     # left num
     fmt += numfmt if left else numdash
     args += [i+1] if left else []
     # left hash
     fmt += ": %8s"
     args += [left_sha]
+    if status == '!':
+        fmt += c_reset + color
     # middle char
     fmt += " %s "
-    args += [statuschar]
+    args += [status]
+    # right coloring
+    if status == '!':
+        fmt += c_reset + c_new
     # right num
     fmt += numfmt if right else numdash
     args += [j+1] if right else []
     # right hash
     fmt += ": %8s"
     args += [right_sha]
+    if status == '!':
+        fmt += c_reset + color
     # subject
     fmt += " %s"
     args += [right_subj if right else left_subj]
@@ -190,7 +213,7 @@ if __name__ == '__main__':
             idx = w.nonzero()[0]
             if not idx:
                 break
-            format_commit_line(idx[0], sA[idx[0]], None, None, '<', c_old)
+            format_commit_line(idx[0], sA[idx[0]], None, None)
             new_on_lhs[idx[0]] = False
             lhs_prior_counter[idx[0]+1:] -= 1
 
@@ -200,7 +223,7 @@ if __name__ == '__main__':
         if i < la:
             idiff = list(difflib.unified_diff(dA[sA[i]], dB[u]))
             if idiff:
-                format_commit_line(i, sA[i], j, u, '!', c_commit)
+                format_commit_line(i, sA[i], j, u, has_diff=True)
                 for line in idiff[2:]: # starts with --- and +++ lines
                     c = ''
                     if line.startswith('+'):
@@ -212,8 +235,8 @@ if __name__ == '__main__':
                     print "    %s%s%s" % (c, line.rstrip('\n'), c_reset)
                 print
             else:
-                format_commit_line(i, sA[i], j, u, '=', c_commit)
+                format_commit_line(i, sA[i], j, u)
             lhs_prior_counter[i+1:] -= 1
         else:
-            format_commit_line(None, None, j, u, '>', c_new)
+            format_commit_line(None, None, j, u)
     process_lhs_orphans()
