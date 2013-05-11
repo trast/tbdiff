@@ -112,22 +112,38 @@ if __name__ == '__main__':
         for j,v in enumerate(sB):
             dist[i,j] = diffsize(None, dB[v])
     lhs, rhs = hungarian.lap(dist)
-    for i,(v,j) in enumerate(zip(sA, lhs)):
-        if i > 0:
+    # We assume the user is really more interested in the second
+    # argument ("newer" version).  To that end, we print the output in
+    # the order of the RHS.  To put the LHS commits that are no longer
+    # in the RHS into a good place, we place them once we have seen
+    # all of their predecessors in the LHS.
+    new_on_lhs = (lhs > lb)[:la]
+    lhs_prior_counter = np.arange(la)
+    for j,(u,i) in enumerate(zip(sB, rhs)):
+        if j > 0:
             print
-        print "commit %d: %s" % (i+1, oneliner(v))
-        if j < lb:
-            print "    matches commit %d: %s" % (j+1, oneliner(sB[j]))
-            idiff = list(difflib.unified_diff(dA[v], dB[sB[j]]))
+        # repeatedly show LHS-specific commits that had all their
+        # predecessors shown
+        while True:
+            assert (lhs_prior_counter >= 0).all()
+            w = (lhs_prior_counter == 0) & new_on_lhs
+            idx = w.nonzero()[0]
+            if not idx:
+                break
+            print "<%3d: %s" % (idx[0], sA[idx[0]])
+            print "    only in lhs"
+            print
+            new_on_lhs[idx[0]] = False
+            lhs_prior_counter[idx[0]+1:] -= 1
+        # now show an RHS commit
+        print ">%3d: %s" % (j+1, oneliner(u))
+        if i < la:
+            print "<%3d: %s" % (i+1, oneliner(sA[i]))
+            idiff = list(difflib.unified_diff(dA[sA[i]], dB[u]))
             if idiff:
                 print "    interdiff:"
-                for line in idiff[2:]:
+                for line in idiff[2:]: # starts with --- and +++ lines
                     print "        " + line,
+            lhs_prior_counter[i+1:] -= 1
         else:
-            print "    newly added in left side"
-    for j,(u,i) in enumerate(zip(sB, rhs)):
-        if i < la:
-            continue
-        print
-        print "newly added in right side"
-        print "    commit %d: %s" % (j+1, oneliner(u))
+            print "    only in rhs"
