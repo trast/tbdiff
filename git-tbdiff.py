@@ -15,7 +15,7 @@ def die(msg):
 
 def prepare_patches(rev_list_arg):
     tmpdir = tempfile.mkdtemp()
-    ret = subprocess.call(["git", "format-patch", "-o", tmpdir, rev_list_arg],
+    ret = subprocess.call(["git", "format-patch", "-k", "-o", tmpdir, rev_list_arg],
                           stdout=open('/dev/null', 'w'))
     if ret:
         die("git format-patch %s returned %d" % (rev_list_arg, ret))
