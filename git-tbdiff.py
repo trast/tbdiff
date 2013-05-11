@@ -153,9 +153,8 @@ if __name__ == '__main__':
     # all of their predecessors in the LHS.
     new_on_lhs = (lhs >= lb)[:la]
     lhs_prior_counter = np.arange(la)
-    for j,(u,i) in enumerate(zip(sB, rhs)):
-        # repeatedly show LHS-specific commits that had all their
-        # predecessors shown
+
+    def process_lhs_orphans():
         while True:
             assert (lhs_prior_counter >= 0).all()
             w = (lhs_prior_counter == 0) & new_on_lhs
@@ -166,7 +165,10 @@ if __name__ == '__main__':
             print ("%s"+numfmt+": %8s < "+numdash+":  ------- %s%s") % (c_old, idx[0]+1, left_sha, left_subj, c_reset)
             new_on_lhs[idx[0]] = False
             lhs_prior_counter[idx[0]+1:] -= 1
+
+    for j,(u,i) in enumerate(zip(sB, rhs)):
         # now show an RHS commit
+        process_lhs_orphans()
         if i < la:
             idiff = list(difflib.unified_diff(dA[sA[i]], dB[u]))
             left_sha, left_subj = commitinfo(sA[i])
@@ -188,3 +190,4 @@ if __name__ == '__main__':
         else:
             right_sha, right_subj = commitinfo(u)
             print ("%s"+numdash+":  ------- > "+numfmt+": %8s %s%s") % (c_new, j+1, right_sha, right_subj, c_reset)
+    process_lhs_orphans()
