@@ -1,6 +1,18 @@
 git-tbdiff: topic branch interdiff
 ----------------------------------
 
+Installation:
+
+  cp git-tbdiff.py /usr/local/bin/git-tbdiff.py
+  # or anywhere else in $PATH, or in $(git --exec-path)
+
+Usage:
+
+  git tbdiff A..B C..D
+
+to compare the topic branch represented by the range A..B with that in
+the range C..D.
+
 We do not have any convenient tools so far for seeing the difference
 between versions of a topic branch.  Some approaches seen in the wild
 include:
