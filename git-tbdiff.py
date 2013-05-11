@@ -151,7 +151,7 @@ if __name__ == '__main__':
     # the order of the RHS.  To put the LHS commits that are no longer
     # in the RHS into a good place, we place them once we have seen
     # all of their predecessors in the LHS.
-    new_on_lhs = (lhs > lb)[:la]
+    new_on_lhs = (lhs >= lb)[:la]
     lhs_prior_counter = np.arange(la)
     for j,(u,i) in enumerate(zip(sB, rhs)):
         # repeatedly show LHS-specific commits that had all their
