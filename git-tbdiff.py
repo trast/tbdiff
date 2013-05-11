@@ -119,6 +119,42 @@ def load_colors():
     c_old = get_color('color.diff.old', 'red')
     c_new = get_color('color.diff.new', 'green')
 
+def commitinfo_maybe(cmt):
+    if cmt:
+        sha, subj = commitinfo(cmt)
+    else:
+        sha = 8*'-'
+        subj = ''
+    return sha, subj
+
+def format_commit_line(i, left, j, right, statuschar, color):
+    left_sha, left_subj = commitinfo_maybe(left)
+    right_sha, right_subj = commitinfo_maybe(right)
+    fmt = '%s' # color
+    args = [color]
+    # left num
+    fmt += numfmt if left else numdash
+    args += [i+1] if left else []
+    # left hash
+    fmt += ": %8s"
+    args += [left_sha]
+    # middle char
+    fmt += " %s "
+    args += [statuschar]
+    # right num
+    fmt += numfmt if right else numdash
+    args += [j+1] if right else []
+    # right hash
+    fmt += ": %8s"
+    args += [right_sha]
+    # subject
+    fmt += " %s"
+    args += [right_subj if right else left_subj]
+    #
+    fmt += "%s"
+    args += [c_reset]
+    print fmt % tuple(args)
+
 if __name__ == '__main__':
     options, args = parser.parse_args()
     if options.color:
@@ -161,8 +197,7 @@ if __name__ == '__main__':
             idx = w.nonzero()[0]
             if not idx:
                 break
-            left_sha, left_subj = commitinfo(sA[idx[0]])
-            print ("%s"+numfmt+": %8s < "+numdash+":  ------- %s%s") % (c_old, idx[0]+1, left_sha, left_subj, c_reset)
+            format_commit_line(idx[0], sA[idx[0]], None, None, '<', c_old)
             new_on_lhs[idx[0]] = False
             lhs_prior_counter[idx[0]+1:] -= 1
 
@@ -171,10 +206,8 @@ if __name__ == '__main__':
         process_lhs_orphans()
         if i < la:
             idiff = list(difflib.unified_diff(dA[sA[i]], dB[u]))
-            left_sha, left_subj = commitinfo(sA[i])
-            right_sha, right_subj = commitinfo(u)
             if idiff:
-                print ("%s"+numfmt+": %8s ! "+numfmt+": %8s %s%s") % (c_commit, i+1, left_sha, j+1, right_sha, right_subj, c_reset)
+                format_commit_line(i, sA[i], j, u, '!', c_commit)
                 for line in idiff[2:]: # starts with --- and +++ lines
                     c = ''
                     if line.startswith('+'):
@@ -183,11 +216,11 @@ if __name__ == '__main__':
                         c = c_old
                     elif line.startswith('@@'):
                         c = c_frag
-                    print "        %s%s%s" % (c, line.rstrip('\n'), c_reset)
+                    print "    %s%s%s" % (c, line.rstrip('\n'), c_reset)
+                print
             else:
-                print ("%s"+numfmt+": %8s = "+numfmt+": %8s %s%s") % (c_commit, i+1, left_sha, j+1, right_sha, right_subj, c_reset)
+                format_commit_line(i, sA[i], j, u, '=', c_commit)
             lhs_prior_counter[i+1:] -= 1
         else:
-            right_sha, right_subj = commitinfo(u)
-            print ("%s"+numdash+":  ------- > "+numfmt+": %8s %s%s") % (c_new, j+1, right_sha, right_subj, c_reset)
+            format_commit_line(None, None, j, u, '>', c_new)
     process_lhs_orphans()
