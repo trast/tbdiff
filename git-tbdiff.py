@@ -12,6 +12,9 @@ import optparse
 parser = optparse.OptionParser()
 parser.add_option('--color', default=True, action='store_true', dest='color')
 parser.add_option('--no-color', action='store_false', dest='color')
+parser.add_option('--creation-weight', action='store',
+                  dest='creation_fudge', type=float, default=0.6,
+                  help='Fudge factor by which creation is weighted [%default]')
 
 def die(msg):
     print >>sys.stderr, msg
@@ -129,13 +132,14 @@ if __name__ == '__main__':
         puterr('.')
         for j,v in enumerate(sB):
             dist[i,j] = diffsize(dA[u], dB[v])
+    # print dist
     puterr('\n')
     for i,u in enumerate(sA):
         for j in range(lb, lb+la):
-            dist[i,j] = diffsize(dA[u], None)
+            dist[i,j] = options.creation_fudge*diffsize(dA[u], None)
     for i in range(la, la+lb):
         for j,v in enumerate(sB):
-            dist[i,j] = diffsize(None, dB[v])
+            dist[i,j] = options.creation_fudge*diffsize(None, dB[v])
     lhs, rhs = hungarian.lap(dist)
     numwidth = max(len(str(la)), len(str(lb)))
     numfmt = "%%%dd" % numwidth
