@@ -211,7 +211,7 @@ if __name__ == '__main__':
             assert (lhs_prior_counter >= 0).all()
             w = (lhs_prior_counter == 0) & new_on_lhs
             idx = w.nonzero()[0]
-            if not idx:
+            if len(idx) == 0:
                 break
             format_commit_line(idx[0], sA[idx[0]], None, None)
             new_on_lhs[idx[0]] = False
