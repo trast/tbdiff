@@ -7,7 +7,11 @@ import tempfile
 import subprocess
 import difflib
 import numpy as np
+import optparse
 
+parser = optparse.OptionParser()
+parser.add_option('--color', default=True, action='store_true', dest='color')
+parser.add_option('--no-color', action='store_false', dest='color')
 
 def die(msg):
     print >>sys.stderr, msg
@@ -92,11 +96,32 @@ def oneliner(sha1):
     return subprocess.check_output(['git', 'log', '--no-walk', '--oneline', sha1]).strip()
 
 
+
+c_reset = ''
+c_commit = ''
+c_frag = ''
+c_old = ''
+c_new = ''
+
+def get_color(varname, default):
+    return subprocess.check_output(['git', 'config', '--get-color', varname, default])
+
+def load_colors():
+    global c_reset, c_commit, c_frag, c_new, c_old
+    c_reset = get_color('', 'reset')
+    c_commit = get_color('color.diff.commit', 'yellow dim')
+    c_frag = get_color('color.diff.frag', 'magenta')
+    c_old = get_color('color.diff.old', 'red')
+    c_new = get_color('color.diff.new', 'green')
+
 if __name__ == '__main__':
-    if len(sys.argv) != 3:
+    options, args = parser.parse_args()
+    if options.color:
+        load_colors()
+    if len(args) != 2:
         die("usage: %s A..B C..D" % sys.argv[0])
-    sA, dA = read_patches(sys.argv[1])
-    sB, dB = read_patches(sys.argv[2])
+    sA, dA = read_patches(args[0])
+    sB, dB = read_patches(args[1])
     la = len(sA)
     lb = len(sB)
     dist = np.zeros((la+lb, la+lb), dtype=np.uint32)
@@ -130,20 +155,28 @@ if __name__ == '__main__':
             idx = w.nonzero()[0]
             if not idx:
                 break
-            print "<%3d: %s" % (idx[0], sA[idx[0]])
+            print "%s<%3d: %s%s" % (c_old, idx[0], sA[idx[0]], c_reset)
             print "    only in lhs"
             print
             new_on_lhs[idx[0]] = False
             lhs_prior_counter[idx[0]+1:] -= 1
         # now show an RHS commit
-        print ">%3d: %s" % (j+1, oneliner(u))
         if i < la:
-            print "<%3d: %s" % (i+1, oneliner(sA[i]))
+            print "%s>%3d: %s%s" % (c_commit, j+1, oneliner(u), c_reset)
+            print "%s<%3d: %s%s" % (c_commit, i+1, oneliner(sA[i]), c_reset)
             idiff = list(difflib.unified_diff(dA[sA[i]], dB[u]))
             if idiff:
                 print "    interdiff:"
                 for line in idiff[2:]: # starts with --- and +++ lines
-                    print "        " + line,
+                    c = ''
+                    if line.startswith('+'):
+                        c = c_new
+                    elif line.startswith('-'):
+                        c = c_old
+                    elif line.startswith('@@'):
+                        c = c_frag
+                    print "        %s%s%s" % (c, line.rstrip('\n'), c_reset)
             lhs_prior_counter[i+1:] -= 1
         else:
+            print "%s>%3d: %s%s" % (c_new, j+1, oneliner(u), c_reset)
             print "    only in rhs"
