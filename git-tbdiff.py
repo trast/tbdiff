@@ -92,11 +92,6 @@ def diffsize(lA, lB):
     return len(list(diff))
 
 
-def puterr(data):
-    sys.stderr.write(data)
-    sys.stderr.flush()
-
-
 def commitinfo(sha1, fmt=None):
     return subprocess.check_output(['git', 'log', '--no-walk', '--pretty=format:%h %s', sha1]).strip().split(' ', 1)
 
@@ -167,11 +162,9 @@ if __name__ == '__main__':
     lb = len(sB)
     dist = np.zeros((la+lb, la+lb), dtype=np.uint32)
     for i,u in enumerate(sA):
-        puterr('.')
         for j,v in enumerate(sB):
             dist[i,j] = diffsize(dA[u], dB[v])
     # print dist
-    puterr('\n')
     for i,u in enumerate(sA):
         for j in range(lb, lb+la):
             dist[i,j] = options.creation_fudge*diffsize(dA[u], None)
