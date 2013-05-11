@@ -67,7 +67,7 @@ def read_patches(rev_list_arg):
     return series, diffs
 
 
-def strip_to_diff_parts(lines):
+def strip_to_diff_parts_1(lines):
     in_diff = False
     for line in lines:
         if line.startswith('diff --git'):
@@ -77,15 +77,17 @@ def strip_to_diff_parts(lines):
         if line.startswith('@@ '):
             continue
         yield line
+def strip_to_diff_parts(*args, **kwargs):
+    return list(strip_to_diff_parts_1(*args, **kwargs))
 
 
 def diffsize(lA, lB):
     if not lA:
-        return len(lB)
+        return len(strip_to_diff_parts(lB))
     if not lB:
-        return len(lA)
-    lA = list(strip_to_diff_parts(lA))
-    lB = list(strip_to_diff_parts(lB))
+        return len(strip_to_diff_parts(lA))
+    lA = strip_to_diff_parts(lA)
+    lB = strip_to_diff_parts(lB)
     diff = difflib.unified_diff(lA, lB)
     return len(list(diff))
 
