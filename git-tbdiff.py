@@ -118,7 +118,7 @@ def commitinfo_maybe(cmt):
     if cmt:
         sha, subj = commitinfo(cmt)
     else:
-        sha = 8*'-'
+        sha = 7*'-'
         subj = ''
     return sha, subj
 
