@@ -20,7 +20,7 @@ include:
 * use git-cherry as a first-order comparison
 
 * rebase the old version on the new version to a) have the patch-id
-  logic drop equilvalent patches and b) [usually] get a conflict when
+  logic drop equivalent patches and b) [usually] get a conflict when
   the patches themselves differ on a change
 
 * apply on the same base
@@ -93,7 +93,7 @@ o--o is free.
 This definition allows us to find a "good" topic interdiff among
 topics with n and m commits in the time needed to compute n+m commit
 diffs and then n*m interdiffs, plus the time needed to compute the
-matching.  For example, in this Python version we use the hugarian[1]
+matching.  For example, in this Python version we use the hungarian[1]
 package, where the underlying algorithm runs in O(n^4)[2].   The
 matching found in this case will be like
 
