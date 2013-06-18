@@ -73,7 +73,7 @@ def read_patches(rev_list_arg):
     series = []
     diffs = {}
     tmpdir = prepare_patches(rev_list_arg)
-    for name in os.listdir(tmpdir):
+    for name in sorted(os.listdir(tmpdir)):
         fp = open(os.path.join(tmpdir, name), 'r')
         data = fp.readlines()
         sha1 = data[0].split()[1]
