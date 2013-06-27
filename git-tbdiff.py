@@ -36,26 +36,21 @@ def die(msg):
     print >>sys.stderr, msg
     sys.exit(1)
 
-def prepare_patches(rev_list_arg):
-    tmpdir = tempfile.mkdtemp()
-    ret = subprocess.call(["git", "format-patch", "-k", "-o", tmpdir, rev_list_arg],
-                          stdout=open('/dev/null', 'w'))
-    if ret:
-        die("git format-patch %s returned %d" % (rev_list_arg, ret))
-    return tmpdir
-
-
-def strip_uninteresting_mail_parts(lines):
+def strip_uninteresting_patch_parts(lines):
     out = []
     state = 'head'
     for line in lines:
-        if state == 'ddd' and line.startswith('diff --git'):
+        if line.startswith('diff --git'):
             state = 'diff'
-        elif state == 'head' and line.strip() == '':
-            state = 'msg'
-        elif state == 'msg' and line.strip() == '---':
-            state = 'ddd'
-        if state in ('diff', 'msg'):
+            out.append('\n')
+            out.append(line)
+        elif state == 'head':
+            if line.startswith('Author: '):
+                out.append(line)
+                out.append('\n')
+            elif line.startswith('    '):
+                out.append(line)
+        elif state == 'diff':
             if line.startswith('index '):
                 pass # skip
             elif line.startswith('@@ '):
@@ -63,23 +58,29 @@ def strip_uninteresting_mail_parts(lines):
             else:
                 out.append(line)
             continue
-        elif state == 'head' and (line.startswith('From:')
-                                or line.startswith('Subject:')):
-            out.append(line)
-            continue
     return out
 
 def read_patches(rev_list_arg):
     series = []
     diffs = {}
-    tmpdir = prepare_patches(rev_list_arg)
-    for name in sorted(os.listdir(tmpdir)):
-        fp = open(os.path.join(tmpdir, name), 'r')
-        data = fp.readlines()
-        sha1 = data[0].split()[1]
-        series.append(sha1)
-        diffs[sha1] = strip_uninteresting_mail_parts(data)
-    subprocess.call(['rm', '-rf', tmpdir])
+    p = subprocess.Popen(['git', 'log', '-p', '--no-merges', '--reverse', '--date-order',
+                          rev_list_arg],
+                         stdout=subprocess.PIPE)
+    sha1 = None
+    data = []
+    def handle_commit():
+        if sha1 is not None:
+            series.append(sha1)
+            diffs[sha1] = strip_uninteresting_patch_parts(data)
+            del data[:]
+    for line in p.stdout:
+        if line.startswith('commit '):
+            handle_commit()
+            _, sha1 = line.strip().split()
+            continue
+        data.append(line)
+    handle_commit()
+    p.wait()
     return series, diffs
 
 
