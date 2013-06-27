@@ -24,6 +24,7 @@ import subprocess
 import difflib
 import numpy as np
 import optparse
+from collections import defaultdict
 
 parser = optparse.OptionParser()
 parser.add_option('--color', default=True, action='store_true', dest='color')
@@ -190,7 +191,7 @@ def format_commit_line(i, left, j, right, has_diff=False):
     args += [c_reset]
     print fmt % tuple(args)
 
-def compute_assignment(sA, dA, sB, dB):
+def compute_matching_assignment(sA, dA, sB, dB):
     la = len(sA)
     lb = len(sB)
     dist = np.zeros((la+lb, la+lb), dtype=np.uint32)
@@ -205,9 +206,13 @@ def compute_assignment(sA, dA, sB, dB):
         for j,v in enumerate(sB):
             dist[i,j] = options.creation_fudge*diffsize(None, dB[v])
     lhs, rhs = hungarian.lap(dist)
-    numwidth = max(len(str(la)), len(str(lb)))
-    numfmt = "%%%dd" % numwidth
-    numdash = numwidth*'-'
+    return lhs, rhs
+
+def compute_assignment(sA, dA, sB, dB):
+    pmap = []
+    la = len(sA)
+    lb = len(sB)
+    lhs, rhs = compute_matching_assignment(sA, dA, sB, dB)
     # We assume the user is really more interested in the second
     # argument ("newer" version).  To that end, we print the output in
     # the order of the RHS.  To put the LHS commits that are no longer
@@ -223,7 +228,7 @@ def compute_assignment(sA, dA, sB, dB):
             idx = w.nonzero()[0]
             if len(idx) == 0:
                 break
-            format_commit_line(idx[0], sA[idx[0]], None, None)
+            pmap.append((idx[0], None, None))
             new_on_lhs[idx[0]] = False
             lhs_prior_counter[idx[0]+1:] -= 1
 
@@ -232,24 +237,34 @@ def compute_assignment(sA, dA, sB, dB):
         process_lhs_orphans()
         if i < la:
             idiff = list(difflib.unified_diff(dA[sA[i]], dB[u]))
-            if idiff:
-                format_commit_line(i, sA[i], j, u, has_diff=True)
-                for line in idiff[2:]: # starts with --- and +++ lines
-                    c = ''
-                    if line.startswith('+'):
-                        c = c_new
-                    elif line.startswith('-'):
-                        c = c_old
-                    elif line.startswith('@@'):
-                        c = c_frag
-                    print "    %s%s%s" % (c, line.rstrip('\n'), c_reset)
-                print
-            else:
-                format_commit_line(i, sA[i], j, u)
+            pmap.append((i, j, idiff))
             lhs_prior_counter[i+1:] -= 1
         else:
-            format_commit_line(None, None, j, u)
+            pmap.append((None, j, None))
     process_lhs_orphans()
+
+    return pmap
+
+def prettyprint_assignment(sA, dA, sB, dB):
+    assignment = compute_assignment(sA, dA, sB, dB)
+    for i, j, idiff in assignment:
+        if j is None:
+            format_commit_line(i, sA[i], None, None)
+        elif i is None:
+            format_commit_line(None, None, j, sB[j])
+        elif len(idiff) == 0:
+            format_commit_line(i, sA[i], j, sB[j], has_diff=False)
+        else:
+            format_commit_line(i, sA[i], j, sB[j], has_diff=True)
+            for line in idiff[2:]: # starts with --- and +++ lines
+                c = ''
+                if line.startswith('+'):
+                    c = c_new
+                elif line.startswith('-'):
+                    c = c_old
+                elif line.startswith('@@'):
+                    c = c_frag
+                print "    %s%s%s" % (c, line.rstrip('\n'), c_reset)
 
 
 if __name__ == '__main__':
@@ -260,4 +275,9 @@ if __name__ == '__main__':
         die("usage: %s A..B C..D" % sys.argv[0])
     sA, dA = read_patches(args[0])
     sB, dB = read_patches(args[1])
-    compute_assignment(sA, dA, sB, dB)
+    la = len(sA)
+    lb = len(sB)
+    numwidth = max(len(str(la)), len(str(lb)))
+    numfmt = "%%%dd" % numwidth
+    numdash = numwidth*'-'
+    prettyprint_assignment(sA, dA, sB, dB)
