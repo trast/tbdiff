@@ -208,11 +208,62 @@ def compute_matching_assignment(sA, dA, sB, dB):
     lhs, rhs = hungarian.lap(dist)
     return lhs, rhs
 
+def split_away_same_patches(sA, dA, sB, dB):
+    patchesB = defaultdict(list)
+    for j,v in enumerate(sB):
+        patchesB[tuple(dB[v])].append(j)
+    eqA = []
+    eqB = [None] * len(sB)
+    for i,u in enumerate(sA):
+        patch = tuple(dA[u])
+        try:
+            j = patchesB[patch].pop(0)
+        except IndexError:
+            eqA.append(None)
+            continue
+        eqA.append(j)
+        eqB[j] = i
+    return eqA, eqB
+
+def make_index_map(eqlist, othereqlist):
+    imap = []
+    mapped = 0
+    for orig,eq in enumerate(eqlist):
+        if eq is None:
+            imap.append(mapped)
+        mapped += 1
+    imap.extend(range(mapped, mapped+sum(1 for x in othereqlist if x is None)))
+    return imap
+
+def rebuild_match_list(eqlist, matchlist, imap):
+    out = []
+    match_it = iter(matchlist)
+    for i,eq in enumerate(eqlist):
+        if eq is None:
+            matched = match_it.next()
+            out.append(imap[matched])
+        else:
+            out.append(eq)
+    for i in match_it:
+        out.append(imap[i])
+    return out
+
 def compute_assignment(sA, dA, sB, dB):
     pmap = []
     la = len(sA)
     lb = len(sB)
-    lhs, rhs = compute_matching_assignment(sA, dA, sB, dB)
+
+    # Attempt to greedily assign an exact match with 0 weight (and
+    # give the other choices for this commit a very large weight).
+    # This speeds up the case where the patches are the same.
+    eqA, eqB = split_away_same_patches(sA, dA, sB, dB)
+    lhs1, rhs1 = compute_matching_assignment([u for u,e in zip(sA,eqA) if e is None], dA,
+                                             [v for v,e in zip(sB,eqB) if e is None], dB)
+    imap = make_index_map(eqA, eqB)
+    jmap = make_index_map(eqB, eqA)
+    lhs = np.array(rebuild_match_list(eqA, lhs1, jmap))
+    rhs = np.array(rebuild_match_list(eqB, rhs1, imap))
+
     # We assume the user is really more interested in the second
     # argument ("newer" version).  To that end, we print the output in
     # the order of the RHS.  To put the LHS commits that are no longer
