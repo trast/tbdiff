@@ -190,14 +190,7 @@ def format_commit_line(i, left, j, right, has_diff=False):
     args += [c_reset]
     print fmt % tuple(args)
 
-if __name__ == '__main__':
-    options, args = parser.parse_args()
-    if options.color:
-        load_colors()
-    if len(args) != 2:
-        die("usage: %s A..B C..D" % sys.argv[0])
-    sA, dA = read_patches(args[0])
-    sB, dB = read_patches(args[1])
+def compute_assignment(sA, dA, sB, dB):
     la = len(sA)
     lb = len(sB)
     dist = np.zeros((la+lb, la+lb), dtype=np.uint32)
@@ -257,3 +250,14 @@ if __name__ == '__main__':
         else:
             format_commit_line(None, None, j, u)
     process_lhs_orphans()
+
+
+if __name__ == '__main__':
+    options, args = parser.parse_args()
+    if options.color:
+        load_colors()
+    if len(args) != 2:
+        die("usage: %s A..B C..D" % sys.argv[0])
+    sA, dA = read_patches(args[0])
+    sB, dB = read_patches(args[1])
+    compute_assignment(sA, dA, sB, dB)
