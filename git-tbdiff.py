@@ -29,6 +29,8 @@ from collections import defaultdict
 parser = optparse.OptionParser()
 parser.add_option('--color', default=True, action='store_true', dest='color')
 parser.add_option('--no-color', action='store_false', dest='color')
+parser.add_option('--no-patches', action='store_false', dest='patches', default=True,
+                  help='short format (no diffs)')
 parser.add_option('--creation-weight', action='store',
                   dest='creation_fudge', type=float, default=0.6,
                   help='Fudge factor by which creation is weighted [%default]')
@@ -307,15 +309,16 @@ def prettyprint_assignment(sA, dA, sB, dB):
             format_commit_line(i, sA[i], j, sB[j], has_diff=False)
         else:
             format_commit_line(i, sA[i], j, sB[j], has_diff=True)
-            for line in idiff[2:]: # starts with --- and +++ lines
-                c = ''
-                if line.startswith('+'):
-                    c = c_new
-                elif line.startswith('-'):
-                    c = c_old
-                elif line.startswith('@@'):
-                    c = c_frag
-                print "    %s%s%s" % (c, line.rstrip('\n'), c_reset)
+            if options.patches:
+                for line in idiff[2:]: # starts with --- and +++ lines
+                    c = ''
+                    if line.startswith('+'):
+                        c = c_new
+                    elif line.startswith('-'):
+                        c = c_old
+                    elif line.startswith('@@'):
+                        c = c_frag
+                    print "    %s%s%s" % (c, line.rstrip('\n'), c_reset)
 
 
 if __name__ == '__main__':
