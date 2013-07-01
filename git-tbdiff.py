@@ -66,7 +66,7 @@ def strip_uninteresting_patch_parts(lines):
 def read_patches(rev_list_arg):
     series = []
     diffs = {}
-    p = subprocess.Popen(['git', 'log', '-p', '--no-merges', '--reverse', '--date-order',
+    p = subprocess.Popen(['git', 'log', '--no-color', '-p', '--no-merges', '--reverse', '--date-order',
                           rev_list_arg],
                          stdout=subprocess.PIPE)
     sha1 = None
@@ -113,7 +113,7 @@ def diffsize(lA, lB):
 
 
 def commitinfo(sha1, fmt=None):
-    return subprocess.check_output(['git', 'log', '--no-walk', '--pretty=format:%h %s', sha1]).strip().split(' ', 1)
+    return subprocess.check_output(['git', 'log', '--no-color', '--no-walk', '--pretty=format:%h %s', sha1]).strip().split(' ', 1)
 
 
 
