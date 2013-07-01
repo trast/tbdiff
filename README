@@ -6,6 +6,10 @@ Installation:
   cp git-tbdiff.py /usr/local/bin/git-tbdiff
   # or anywhere else in $PATH, or in $(git --exec-path)
 
+If your system does not yet have a /usr/bin/python2 symlink (older
+systems would only have /usr/bin/python), you will need to edit the
+`#!` line.
+
 Usage:
 
   git tbdiff A..B C..D

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 
 # git-tbdiff: show the difference between two versions of a topic branch
 #
