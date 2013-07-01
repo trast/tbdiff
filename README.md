@@ -1,10 +1,10 @@
 git-tbdiff: topic branch interdiff
-----------------------------------
+==================================
 
 Installation:
 
-  cp git-tbdiff.py /usr/local/bin/git-tbdiff
-  # or anywhere else in $PATH, or in $(git --exec-path)
+    cp git-tbdiff.py /usr/local/bin/git-tbdiff
+    # or anywhere else in $PATH, or in $(git --exec-path)
 
 If your system does not yet have a /usr/bin/python2 symlink (older
 systems would only have /usr/bin/python), you will need to edit the
@@ -12,7 +12,7 @@ systems would only have /usr/bin/python), you will need to edit the
 
 Usage:
 
-  git tbdiff A..B C..D
+    git tbdiff A..B C..D
 
 to compare the topic branch represented by the range A..B with that in
 the range C..D.
