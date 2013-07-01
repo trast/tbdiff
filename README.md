@@ -1,13 +1,15 @@
 git-tbdiff: topic branch interdiff
 ==================================
 
+### 2-minute guide
+
 Installation:
 
     cp git-tbdiff.py /usr/local/bin/git-tbdiff
     # or anywhere else in $PATH, or in $(git --exec-path)
 
-If your system does not yet have a /usr/bin/python2 symlink (older
-systems would only have /usr/bin/python), you will need to edit the
+If your system does not yet have a `/usr/bin/python2` symlink (older
+systems would only have `/usr/bin/python`), you will need to edit the
 `#!` line.
 
 Usage:
@@ -17,7 +19,49 @@ Usage:
 to compare the topic branch represented by the range A..B with that in
 the range C..D.
 
-We do not have any convenient tools so far for seeing the difference
+
+### Synopsis
+
+    git tbdiff [--[no-]color] [--no-patches]
+               [--creation-weight=<factor>]
+               <range1> <range2>
+
+
+### Description
+
+_tbdiff_ shows the differences between two versions of a patch series,
+or more generally, two sets of commits (ignoring merges).
+
+The two `<range>` arguments are passed unchanged and without any
+validation to two git-log invocations.
+
+To do this in a meaningful way, it tries to find a good correspondence
+between commits in the two versions (see _Algorithm_ below), and then
+shows the difference between the pairs found.  It also copes with
+removal and addition of commits.
+
+
+### Options
+
+`--[no-]color`::
+	Toggle colored output.  The default is to use color.
+
+`--no-patches`::
+	Suppress the diffs between commit pairs that were deemed to
+	correspond; only show the pairings.
+
+`--creation-weight=<factor>`::
+	Set the creation/deletion cost fudge factor to `<factor>`.
+	Defaults to 0.6.  Try a larger value if _tbdiff_ erroneously
+	considers a large change a total rewrite (deletion of one
+	commit and addition of another), and a smaller one in the
+	reverse case.  See the _Algorithm_ section below for an
+	explanation why this is needed.
+
+
+### Rationale
+
+Git does not ship with convenient tools for seeing the difference
 between versions of a topic branch.  Some approaches seen in the wild
 include:
 
@@ -37,6 +81,9 @@ We propose a somewhat generalized approach based on interdiffs.  The
 goal would be to find an explanation of the new series in terms of the
 old one.  However, the order might be different, some commits could
 have been added and removed, and some commits could have been tweaked.
+
+
+### Algorithm
 
 The general idea is this:
 
@@ -91,8 +138,13 @@ commits on both sides:
 
     o            o
 
-The cost of an edge o--C is the size of C's diff.  The cost of an edge
-o--o is free.
+The cost of an edge o--C is the size of C's diff, modified by a fudge
+factor that should be smaller than 1.  The cost of an edge o--o is
+free.  The fudge factor is necessary because even if 1 and C have
+nothing in common, they may still share a few empty lines and such,
+making the assignment "1--C, o--o" may be slightly cheaper than "1--o,
+o--C" even if 1 and C have nothing in common.  With the fudge factor
+we require a much larger common part to consider the patches related.
 
 This definition allows us to find a "good" topic interdiff among
 topics with n and m commits in the time needed to compute n+m commit
