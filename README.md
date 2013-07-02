@@ -42,20 +42,23 @@ validation to two git-log invocations.
 
 ### Options
 
-`--[no-]color`::
-	Toggle colored output.  The default is to use color.
+* `--[no-]color`
 
-`--no-patches`::
-	Suppress the diffs between commit pairs that were deemed to
-	correspond; only show the pairings.
+  Toggle colored output.  The default is to use color.
 
-`--creation-weight=<factor>`::
-	Set the creation/deletion cost fudge factor to `<factor>`.
-	Defaults to 0.6.  Try a larger value if _tbdiff_ erroneously
-	considers a large change a total rewrite (deletion of one
-	commit and addition of another), and a smaller one in the
-	reverse case.  See the _Algorithm_ section below for an
-	explanation why this is needed.
+* `--no-patches`
+
+  Suppress the diffs between commit pairs that were deemed to
+  correspond; only show the pairings.
+
+* `--creation-weight=<factor>`
+
+  Set the creation/deletion cost fudge factor to `<factor>`.
+  Defaults to 0.6.  Try a larger value if _tbdiff_ erroneously
+  considers a large change a total rewrite (deletion of one
+  commit and addition of another), and a smaller one in the
+  reverse case.  See the _Algorithm_ section below for an
+  explanation why this is needed.
 
 
 ### Rationale
