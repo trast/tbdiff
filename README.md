@@ -31,14 +31,13 @@ the range C..D.
 
 _tbdiff_ shows the differences between two versions of a patch series,
 or more generally, two sets of commits (ignoring merges).
-
-The two `<range>` arguments are passed unchanged and without any
-validation to two git-log invocations.
-
 To do this in a meaningful way, it tries to find a good correspondence
 between commits in the two versions (see _Algorithm_ below), and then
 shows the difference between the pairs found.  It also copes with
 removal and addition of commits.
+
+The two `<range>` arguments are passed unchanged and without any
+validation to two git-log invocations.
 
 
 ### Options
