@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import re
 import sys
 import hungarian # https://pypi.python.org/pypi/hungarian
 import tempfile
@@ -321,14 +322,29 @@ def prettyprint_assignment(sA, dA, sB, dB):
                     print "    %s%s%s" % (c, line.rstrip('\n'), c_reset)
 
 
+def find_common_range(tbranches):
+    branches = tbranches.split("...")
+    p = subprocess.Popen(['git', 'merge-base', branches[0], branches[1]],
+                         stdout=subprocess.PIPE)
+    revision = p.stdout.read().strip() + ".."
+    return revision + branches[0], revision + branches[1]
+
+
 if __name__ == '__main__':
     options, args = parser.parse_args()
     if options.color:
         load_colors()
-    if len(args) != 2:
-        die("usage: %s A..B C..D" % sys.argv[0])
-    sA, dA = read_patches(args[0])
-    sB, dB = read_patches(args[1])
+    if (len(args) == 2 and re.match(".*\.\..*", args[0]) and
+        re.match(".*\.\..*", args[1])):
+        rangeA = args[0]
+        rangeB = args[1]
+    elif len(args) == 1 and re.match(".*\.\.\..*", args[0]):
+        rangeA, rangeB = find_common_range(args[0])
+    else:
+        die("usage: %(command)s A..B C..D\n   or: %(command)s A...B" %
+            {'command' : sys.argv[0]})
+    sA, dA = read_patches(rangeA)
+    sB, dB = read_patches(rangeB)
     la = len(sA)
     lb = len(sB)
     numwidth = max(len(str(la)), len(str(lb)))
