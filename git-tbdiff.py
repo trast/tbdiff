@@ -323,11 +323,8 @@ def prettyprint_assignment(sA, dA, sB, dB):
 
 
 def find_common_range(tbranches):
-    branches = tbranches.split("...")
-    p = subprocess.Popen(['git', 'merge-base', branches[0], branches[1]],
-                         stdout=subprocess.PIPE)
-    revision = p.stdout.read().strip() + ".."
-    return [revision + branches[0]], [revision + branches[1]]
+    A, B = tbranches.split("...", 1)
+    return [A, '--not', B], [B, '--not', A]
 
 
 if __name__ == '__main__':
