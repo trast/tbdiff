@@ -29,6 +29,8 @@ from collections import defaultdict
 parser = optparse.OptionParser()
 parser.add_option('--color', default=True, action='store_true', dest='color')
 parser.add_option('--no-color', action='store_false', dest='color')
+parser.add_option('--dual-color', action='store_const', dest='color', const=2,
+                  help='color both diff and diff-between-diffs')
 parser.add_option('--no-patches', action='store_false', dest='patches', default=True,
                   help='short format (no diffs)')
 parser.add_option('--creation-weight', action='store',
@@ -122,17 +124,31 @@ c_commit = ''
 c_frag = ''
 c_old = ''
 c_new = ''
+c_inv_old = ''
+c_inv_new = ''
 
 def get_color(varname, default):
     return subprocess.check_output(['git', 'config', '--get-color', varname, default])
 
+def invert_ansi_color(color):
+    # \e[7;...m chooses the inverse of \e[...m
+    # we try to be nice and also support the reverse transformation
+    # (from inverse to normal)
+    assert color[:2] == '\x1b['
+    i = color.find('7;')
+    if i >= 0:
+        return color[:i] + color[i+2:]
+    return '\x1b[7;' + color[2:]
+
 def load_colors():
-    global c_reset, c_commit, c_frag, c_new, c_old
+    global c_reset, c_commit, c_frag, c_new, c_old, c_inv_old, c_inv_new
     c_reset = get_color('', 'reset')
     c_commit = get_color('color.diff.commit', 'yellow dim')
     c_frag = get_color('color.diff.frag', 'magenta')
     c_old = get_color('color.diff.old', 'red')
     c_new = get_color('color.diff.new', 'green')
+    c_inv_old = invert_ansi_color(c_old)
+    c_inv_new = invert_ansi_color(c_new)
 
 def commitinfo_maybe(cmt):
     if cmt:
@@ -300,15 +316,44 @@ def compute_assignment(sA, dA, sB, dB):
 
 def print_colored_interdiff(idiff):
     for line in idiff:
-        c = ''
+        line = line.rstrip('\n')
+        if not line:
+            print
+            continue
+        # Hunk headers in interdiff are always c_frag, and hunk
+        # headers in the original patches are left uncolored (too
+        # noisy).
+        if line.startswith('@@'):
+            print "    %s%s%s" % (c_frag, line, c_reset)
+            continue
+        # In traditional single-coloring mode, we color according to
+        # the interdiff.
+        if options.color == True:
+            color = ''
+            if line.startswith('-'):
+                color = c_old
+            elif line.startswith('+'):
+                color = c_new
+            print ''.join(["    ", color, line, c_reset])
+            continue
+        # In dual-color mode, we color the first column (changes
+        # between patches) in reverse to highlight the interdiff, and
+        # the rest of the line (the actual patches) normally to
+        # highlight the diffs themselves.
+        lead, line = line[0], line[1:]
+        lead_color = ''
+        if lead == '+':
+            lead_color = c_inv_new
+        elif lead == '-':
+            lead_color = c_inv_old
+        main_color = ''
         if line.startswith('+'):
-            c = c_new
+            main_color = c_new
         elif line.startswith('-'):
-            c = c_old
-        elif line.startswith('@@'):
-            c = c_frag
-        print "    %s%s%s" % (c, line.rstrip('\n'), c_reset)
-
+            main_color = c_old
+        print ''.join(["    ",
+                       lead_color, lead, c_reset,
+                       main_color, line, c_reset])
 
 def prettyprint_assignment(sA, dA, sB, dB):
     assignment = compute_assignment(sA, dA, sB, dB)
