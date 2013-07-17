@@ -333,8 +333,13 @@ if __name__ == '__main__':
         A, B = args[0].split("...", 1)
         rangeA = [A, '--not', B]
         rangeB = [B, '--not', A]
+    elif len(args) == 3:
+        rangeA = [args[1], '--not', args[0]]
+        rangeB = [args[2], '--not', args[0]]
     else:
-        die("usage: %(command)s A..B C..D\n   or: %(command)s A...B" %
+        die("usage: %(command)s A..B C..D\n"
+            "   or: %(command)s A...B         # short for:  B..A A..B\n"
+            "   or: %(command)s base A B      # short for:  base..A base..B" %
             {'command' : sys.argv[0]})
     sA, dA = read_patches(rangeA)
     sB, dB = read_patches(rangeB)

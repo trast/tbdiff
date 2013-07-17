@@ -36,6 +36,10 @@ compare the range X..A to X..B.
                [--creation-weight=<factor>]
                <committish1>...<committish2>
 
+    git tbdiff [--[no-]color] [--no-patches]
+               [--creation-weight=<factor>]
+               <base> <topic1> <topic2>
+
 ### Description
 
 _tbdiff_ shows the differences between two versions of a patch series,
