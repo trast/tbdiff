@@ -63,11 +63,12 @@ def strip_uninteresting_patch_parts(lines):
             continue
     return out
 
-def read_patches(rev_list_arg):
+def read_patches(rev_list_args):
     series = []
     diffs = {}
-    p = subprocess.Popen(['git', 'log', '--no-color', '-p', '--no-merges', '--reverse', '--date-order',
-                          rev_list_arg],
+    p = subprocess.Popen(['git', 'log', '--no-color', '-p', '--no-merges',
+                          '--reverse', '--date-order']
+                         + rev_list_args,
                          stdout=subprocess.PIPE)
     sha1 = None
     data = []
@@ -326,7 +327,7 @@ def find_common_range(tbranches):
     p = subprocess.Popen(['git', 'merge-base', branches[0], branches[1]],
                          stdout=subprocess.PIPE)
     revision = p.stdout.read().strip() + ".."
-    return revision + branches[0], revision + branches[1]
+    return [revision + branches[0]], [revision + branches[1]]
 
 
 if __name__ == '__main__':
@@ -334,8 +335,8 @@ if __name__ == '__main__':
     if options.color:
         load_colors()
     if len(args) == 2 and '..' in args[0] and '..' in args[1]:
-        rangeA = args[0]
-        rangeB = args[1]
+        rangeA = [args[0]]
+        rangeB = [args[1]]
     elif len(args) == 1 and '...' in args[0]:
         rangeA, rangeB = find_common_range(args[0])
     else:
