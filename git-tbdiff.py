@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import re
 import sys
 import hungarian # https://pypi.python.org/pypi/hungarian
 import tempfile
@@ -334,11 +333,10 @@ if __name__ == '__main__':
     options, args = parser.parse_args()
     if options.color:
         load_colors()
-    if (len(args) == 2 and re.match(".*\.\..*", args[0]) and
-        re.match(".*\.\..*", args[1])):
+    if len(args) == 2 and '..' in args[0] and '..' in args[1]:
         rangeA = args[0]
         rangeB = args[1]
-    elif len(args) == 1 and re.match(".*\.\.\..*", args[0]):
+    elif len(args) == 1 and '...' in args[0]:
         rangeA, rangeB = find_common_range(args[0])
     else:
         die("usage: %(command)s A..B C..D\n   or: %(command)s A...B" %
