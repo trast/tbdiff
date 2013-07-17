@@ -322,11 +322,6 @@ def prettyprint_assignment(sA, dA, sB, dB):
                     print "    %s%s%s" % (c, line.rstrip('\n'), c_reset)
 
 
-def find_common_range(tbranches):
-    A, B = tbranches.split("...", 1)
-    return [A, '--not', B], [B, '--not', A]
-
-
 if __name__ == '__main__':
     options, args = parser.parse_args()
     if options.color:
@@ -335,7 +330,9 @@ if __name__ == '__main__':
         rangeA = [args[0]]
         rangeB = [args[1]]
     elif len(args) == 1 and '...' in args[0]:
-        rangeA, rangeB = find_common_range(args[0])
+        A, B = args[0].split("...", 1)
+        rangeA = [A, '--not', B]
+        rangeB = [B, '--not', A]
     else:
         die("usage: %(command)s A..B C..D\n   or: %(command)s A...B" %
             {'command' : sys.argv[0]})
