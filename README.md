@@ -19,6 +19,12 @@ Usage:
 to compare the topic branch represented by the range A..B with that in
 the range C..D.
 
+or:
+
+    git tbdiff A...B
+
+to let tbdiff automatically calculate the common ancestor X and
+compare the range X..A to X..B.
 
 ### Synopsis
 
@@ -26,6 +32,13 @@ the range C..D.
                [--creation-weight=<factor>]
                <range1> <range2>
 
+    git tbdiff [--[no-]color] [--no-patches]
+               [--creation-weight=<factor>]
+               <committish1>...<committish2>
+
+    git tbdiff [--[no-]color] [--no-patches]
+               [--creation-weight=<factor>]
+               <base> <topic1> <topic2>
 
 ### Description
 

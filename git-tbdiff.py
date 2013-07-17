@@ -65,11 +65,12 @@ def strip_uninteresting_patch_parts(lines):
             continue
     return out
 
-def read_patches(rev_list_arg):
+def read_patches(rev_list_args):
     series = []
     diffs = {}
-    p = subprocess.Popen(['git', 'log', '--no-color', '-p', '--no-merges', '--reverse', '--date-order',
-                          rev_list_arg],
+    p = subprocess.Popen(['git', 'log', '--no-color', '-p', '--no-merges',
+                          '--reverse', '--date-order']
+                         + rev_list_args,
                          stdout=subprocess.PIPE)
     sha1 = None
     data = []
@@ -374,10 +375,23 @@ if __name__ == '__main__':
     options, args = parser.parse_args()
     if options.color:
         load_colors()
-    if len(args) != 2:
-        die("usage: %s A..B C..D" % sys.argv[0])
-    sA, dA = read_patches(args[0])
-    sB, dB = read_patches(args[1])
+    if len(args) == 2 and '..' in args[0] and '..' in args[1]:
+        rangeA = [args[0]]
+        rangeB = [args[1]]
+    elif len(args) == 1 and '...' in args[0]:
+        A, B = args[0].split("...", 1)
+        rangeA = [A, '--not', B]
+        rangeB = [B, '--not', A]
+    elif len(args) == 3:
+        rangeA = [args[1], '--not', args[0]]
+        rangeB = [args[2], '--not', args[0]]
+    else:
+        die("usage: %(command)s A..B C..D\n"
+            "   or: %(command)s A...B         # short for:  B..A A..B\n"
+            "   or: %(command)s base A B      # short for:  base..A base..B" %
+            {'command' : sys.argv[0]})
+    sA, dA = read_patches(rangeA)
+    sB, dB = read_patches(rangeB)
     la = len(sA)
     lb = len(sB)
     numwidth = max(len(str(la)), len(str(lb)))
