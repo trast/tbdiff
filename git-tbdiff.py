@@ -298,6 +298,18 @@ def compute_assignment(sA, dA, sB, dB):
 
     return pmap
 
+def print_colored_interdiff(idiff):
+    for line in idiff:
+        c = ''
+        if line.startswith('+'):
+            c = c_new
+        elif line.startswith('-'):
+            c = c_old
+        elif line.startswith('@@'):
+            c = c_frag
+        print "    %s%s%s" % (c, line.rstrip('\n'), c_reset)
+
+
 def prettyprint_assignment(sA, dA, sB, dB):
     assignment = compute_assignment(sA, dA, sB, dB)
     for i, j, idiff in assignment:
@@ -310,15 +322,7 @@ def prettyprint_assignment(sA, dA, sB, dB):
         else:
             format_commit_line(i, sA[i], j, sB[j], has_diff=True)
             if options.patches:
-                for line in idiff[2:]: # starts with --- and +++ lines
-                    c = ''
-                    if line.startswith('+'):
-                        c = c_new
-                    elif line.startswith('-'):
-                        c = c_old
-                    elif line.startswith('@@'):
-                        c = c_frag
-                    print "    %s%s%s" % (c, line.rstrip('\n'), c_reset)
+                print_colored_interdiff(idiff[2:]) # starts with --- and +++ lines
 
 
 if __name__ == '__main__':
