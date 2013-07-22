@@ -34,7 +34,7 @@ test_expect_success 'simple A B C (unmodified)' '
 	test_cmp expected actual
 '
 
-test_expect_failure 'trivial reordering' '
+test_expect_success 'trivial reordering' '
 	git tbdiff --no-color master topic reordered >actual &&
 	cat >expected <<-EOF &&
 	1:  4de457d = 1:  aca177a s/5/A/

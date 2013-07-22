@@ -60,6 +60,12 @@ def strip_uninteresting_patch_parts(lines):
                 pass # skip
             elif line.startswith('@@ '):
                 out.append('@@\n')
+            elif line == '\n':
+                # A completely blank (not ' \n', which is context)
+                # line is not valid in a diff.  We skip it silently,
+                # because this neatly handles the blank separator line
+                # between commits in git-log output.
+                pass
             else:
                 out.append(line)
             continue
